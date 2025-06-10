@@ -1,0 +1,6 @@
+@ATOH_HostAddress = http://localhost:5001
+
+GET {{ATOH_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
