@@ -1,9 +1,9 @@
 using ATOH.DataBase.DbContexts;
+using ATOH.DataBase.Inits;
 using ATOH.DataBase.Repositories;
 using ATOH.Entities;
 using ATOH.Interfaces;
 using ATOH.Services;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,5 +37,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+
+DbInitializer.SeedInitialUser(app.Services);
 
 app.Run();

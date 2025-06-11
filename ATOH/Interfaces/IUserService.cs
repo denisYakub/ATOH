@@ -1,12 +1,12 @@
 ﻿using ATOH.Entities;
 using ATOH.Entities.DTOs;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ATOH.Interfaces
 {
     public interface IUserService
     {
-        bool IsUser(Guid key);
-        User Get(string login, string password);
-        void UpdateField(UpdateUserFieldRequest request);
+        void UpdateField(Guid token, UpdateUserFieldRequest request);
+        JsonResult GetUser(string login, string password);
     }
 }

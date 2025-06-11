@@ -10,189 +10,155 @@ namespace ATOH.Controllers
     [Route("[controller]")]
     public class Controller(IAdminService admin, IUserService user) : ControllerBase
     {
-        [HttpPost("create/{key}")]
-        public IActionResult CreateUser([FromRoute] Guid key, [FromBody] CreateUserRequest request)
+        [HttpPost("create/{token}")]
+        public IActionResult CreateUser([FromRoute] Guid token, [FromBody] CreateUserRequest request)
         {
             try
             {
-                if (admin.IsAdmin(key))
-                    admin.Create(request);
-                else
-                    return new UnauthorizedResult();
+                admin.CreateUser(token, request);
 
                 return new OkResult();
             }
-            catch(BadRequestException ex)
+            catch (UnAuthException ex)
+            {
+                return new UnauthorizedObjectResult(ex.Message);
+            }
+            catch (BadRequestException ex)
             {
                 return new BadRequestObjectResult(ex.Message);
             }
-            catch (Exception ex)
-            {
-                return new ConflictObjectResult(ex);
-            }
         }
 
-        [HttpPatch("update-field/{key}")]
-        public IActionResult UpdateUserField([FromRoute] Guid key, [FromBody] UpdateUserFieldRequest request)
+        [HttpPatch("update-field/{token}")]
+        public IActionResult UpdateUserField([FromRoute] Guid token, [FromBody] UpdateUserFieldRequest request)
         {
             try
             {
-                if (admin.IsAdmin(key))
-                    admin.UpdateField(request);
-                else if (user.IsUser(key))
-                    user.UpdateField(request);
-                else
-                    return new UnauthorizedResult();
+                user.UpdateField(token, request);
 
                 return new OkResult();
             }
+            catch (UnAuthException ex)
+            {
+                return new UnauthorizedObjectResult(ex.Message);
+            }
             catch (BadRequestException ex)
             {
                 return new BadRequestObjectResult(ex.Message);
             }
-            catch (Exception ex)
-            {
-                return new ConflictObjectResult(ex);
-            }
         }
 
-        [HttpPatch("recover/{key}")]
-        public IActionResult RecoverUser([FromRoute] Guid key)
+        [HttpPatch("recover/{token}")]
+        public IActionResult RecoverUser([FromRoute] Guid token)
         {
             try
             {
-                if (admin.IsAdmin(key))
-                    admin.Recover();
-                else
-                    return new UnauthorizedResult();
+                admin.RecoverUser(token);
 
                 return new OkResult();
             }
-            catch (BadRequestException ex)
+            catch (UnAuthException ex)
             {
-                return new BadRequestObjectResult(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return new ConflictObjectResult(ex);
-            }
-        }
-
-        [HttpGet("read-all-active/{key}")]
-        public IActionResult GetAllActiveUsers([FromRoute] Guid key)
-        {
-            try
-            {
-                if (admin.IsAdmin(key))
-                {
-                    var result = admin.GetActiveUsers();
-
-                    return new OkObjectResult(result);
-                }
-                else
-                    return new UnauthorizedResult();
+                return new UnauthorizedObjectResult(ex.Message);
             }
             catch (BadRequestException ex)
             {
                 return new BadRequestObjectResult(ex.Message);
             }
-            catch (Exception ex)
-            {
-                return new ConflictObjectResult(ex);
-            }
         }
 
-        [HttpGet("read/{key}/{login}")]
-        public IActionResult GetUser([FromRoute] Guid key, [FromRoute] string login)
+        [HttpGet("read-all-active/{token}")]
+        public IActionResult GetAllActiveUsers([FromRoute] Guid token)
         {
             try
             {
-                if (admin.IsAdmin(key))
-                {
-                    var result = admin.Get(login);
+                var result = admin.GetActiveUsers(token);
 
-                    return new OkObjectResult(result);
-                }
-                else
-                    return new UnauthorizedResult();
+                return new OkObjectResult(result);
+            }
+            catch (UnAuthException ex)
+            {
+                return new UnauthorizedObjectResult(ex.Message);
             }
             catch (BadRequestException ex)
             {
                 return new BadRequestObjectResult(ex.Message);
             }
-            catch (Exception ex)
-            {
-                return new ConflictObjectResult(ex);
-            }
         }
 
-        [HttpGet("read/{key}/{login}/{password}")]
-        public IActionResult GetUser([FromRoute] Guid key, [FromRoute] string login, [FromRoute] string password)
+        [HttpGet("read/{token}/{login}")]
+        public IActionResult GetUser([FromRoute] Guid token, [FromRoute] string login)
         {
             try
             {
-                if (user.IsUser(key))
-                {
-                    var result = user.Get(login, password);
+                var result = admin.GetUser(token, login);
 
-                    return new OkObjectResult(result);
-                }
-                else
-                    return new UnauthorizedResult();
+                return new OkObjectResult(result);
+            }
+            catch (UnAuthException ex)
+            {
+                return new UnauthorizedObjectResult(ex.Message);
             }
             catch (BadRequestException ex)
             {
                 return new BadRequestObjectResult(ex.Message);
             }
-            catch (Exception ex)
-            {
-                return new ConflictObjectResult(ex);
-            }
         }
 
-        [HttpGet("read-all-older/{key}/{Date}")]
-        public IActionResult GetAllOlderUsers([FromRoute] Guid key, [FromRoute] DateTime Date)
+        [HttpGet("login/{login}/{password}")]
+        public IActionResult GetUser([FromRoute] string login, [FromRoute] string password)
         {
             try
             {
-                if (admin.IsAdmin(key))
-                {
-                    var result = admin.GetOlderUsers(Date);
+                var result = user.GetUser(login, password);
 
-                    return new OkObjectResult(result);
-                }
-                else
-                    return new UnauthorizedResult();
+                return new OkObjectResult(result);
+            }
+            catch (UnAuthException ex)
+            {
+                return new UnauthorizedObjectResult(ex.Message);
             }
             catch (BadRequestException ex)
             {
                 return new BadRequestObjectResult(ex.Message);
             }
-            catch (Exception ex)
-            {
-                return new ConflictObjectResult(ex);
-            }
         }
 
-        [HttpDelete("delete/{key}/{login}/{soft}")]
-        public IActionResult DeleteUser([FromRoute] Guid key, [FromRoute] string login, [FromRoute] bool soft)
+        [HttpGet("read-all-older/{token}/{date}")]
+        public IActionResult GetAllOlderUsers([FromRoute] Guid token, [FromRoute] DateTime date)
         {
             try
             {
-                if (admin.IsAdmin(key)) 
-                    admin.Delete(login, soft);
-                else
-                    return new UnauthorizedResult();
+                var result = admin.GetOlderUsers(token, date);
+
+                return new OkObjectResult(result);
+            }
+            catch (UnAuthException ex)
+            {
+                return new UnauthorizedObjectResult(ex.Message);
+            }
+            catch (BadRequestException ex)
+            {
+                return new BadRequestObjectResult(ex.Message);
+            }
+        }
+
+        [HttpDelete("delete/{token}/{login}/{soft}")]
+        public IActionResult DeleteUser([FromRoute] Guid token, [FromRoute] string login, [FromRoute] bool soft)
+        {
+            try
+            {
+                admin.DeleteUser(token, login, soft);
 
                 return new OkResult();
             }
+            catch (UnAuthException ex)
+            {
+                return new UnauthorizedObjectResult(ex.Message);
+            }
             catch (BadRequestException ex)
             {
                 return new BadRequestObjectResult(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return new ConflictObjectResult(ex);
             }
         }
     }

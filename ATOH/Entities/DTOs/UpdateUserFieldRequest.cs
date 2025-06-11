@@ -1,6 +1,8 @@
-﻿namespace ATOH.Entities.DTOs
+﻿using ATOH.Entities.Enums;
+
+namespace ATOH.Entities.DTOs
 {
     public record struct UpdateUserFieldRequest(
-        string Field,
+        FieldsToUpdate Field,
         string NewValue);
 }

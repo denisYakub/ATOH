@@ -1,48 +1,90 @@
 ﻿using ATOH.Entities;
 using ATOH.Entities.DTOs;
+using ATOH.Entities.Exceptions;
 using ATOH.Interfaces;
 
 namespace ATOH.Services
 {
     public class AdminService(IRepository<User> repository) : IAdminService
     {
-        public void Create(CreateUserRequest request)
+        public void CreateUser(Guid token, CreateUserRequest request)
         {
-            throw new NotImplementedException();
+            var admin = repository.Get(token);
+
+            if (!admin.Admin)
+                throw new UnAuthException("Only admins can create users");
+
+            if (!repository.IsLoginUnique(request.Login))
+                throw new BadRequestException($"Login {request.Login} is not unique");
+
+            var newUser = 
+                new User(
+                    request.Login, request.Password, 
+                    request.Name, request.Gender, 
+                    request.Birthday, 
+                    request.Admin,
+                    admin.Login
+                );
+
+            repository.Create(newUser);
+            repository.CreateToken(newUser.Guid);
+            repository.SaveChanges();
         }
 
-        public void Delete(string login, bool soft)
+        public void DeleteUser(Guid token, string login, bool soft)
         {
-            throw new NotImplementedException();
+            var admin = repository.Get(token);
+
+            if (!admin.Admin)
+                throw new UnAuthException("Only admins can delete users");
+
+            var user = repository.Get(login);
+
+            if (soft)
+            {
+                user.SoftDelete(admin.Login);
+
+                repository.Update(user);
+            }
+            else
+            {
+                repository.Delete(user);
+            }
+
+            repository.DeleteToken(user.Guid);
+
+            repository.SaveChanges();
         }
 
-        public User Get(string login)
+        public IEnumerable<User> GetActiveUsers(Guid token)
         {
-            throw new NotImplementedException();
+            if (!repository.IsAdminToken(token))
+                throw new UnAuthException("Only admins can read users");
+
+            return repository.GetAllActive();
         }
 
-        public IEnumerable<User> GetActiveUsers()
+        public IEnumerable<User> GetOlderUsers(Guid token, DateTime date)
         {
-            throw new NotImplementedException();
+            if (!repository.IsAdminToken(token))
+                throw new UnAuthException("Only admins can read users");
+
+            return repository.GetAllOlder(date);
         }
 
-        public IEnumerable<User> GetOlderUsers(DateTime Date)
+        public User GetUser(Guid token, string login)
         {
-            throw new NotImplementedException();
+            if (!repository.IsAdminToken(token))
+                throw new UnAuthException("Only admins can read users");
+
+            return repository.Get(login);
         }
 
-        public bool IsAdmin(Guid key)
+        public void RecoverUser(Guid token)
         {
-            throw new NotImplementedException();
-        }
+            if (!repository.IsAdminToken(token))
+                throw new UnAuthException("Only admins can recover users");
 
-        public void Recover()
-        {
-            throw new NotImplementedException();
-        }
-
-        public void UpdateField(UpdateUserFieldRequest request)
-        {
             throw new NotImplementedException();
         }
     }

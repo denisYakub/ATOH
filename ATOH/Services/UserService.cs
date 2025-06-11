@@ -1,24 +1,34 @@
 ﻿using ATOH.Entities;
 using ATOH.Entities.DTOs;
+using ATOH.Entities.Exceptions;
 using ATOH.Interfaces;
+using Microsoft.AspNetCore.Mvc;
 
 namespace ATOH.Services
 {
     public class UserService(IRepository<User> repository) : IUserService
     {
-        public User Get(string login, string password)
+        public JsonResult GetUser(string login, string password)
         {
-            throw new NotImplementedException();
+            var user = repository.Get(login, password);
+
+            var token = repository.GetToken(user.Guid);
+
+            return new JsonResult(new {UserInfo = user, Token = token});
         }
 
-        public bool IsUser(Guid key)
+        public void UpdateField(Guid token, UpdateUserFieldRequest request)
         {
-            throw new NotImplementedException();
-        }
+            if (request.Field == Entities.Enums.FieldsToUpdate.Login)
+                if (!repository.IsLoginUnique(request.NewValue))
+                    throw new BadRequestException($"Login {request.NewValue} is not unique");
 
-        public void UpdateField(UpdateUserFieldRequest request)
-        {
-            throw new NotImplementedException();
+            User user = repository.Get(token);
+
+            user.UpdateField(request.Field, request.NewValue);
+
+            repository.Update(user);
+            repository.SaveChanges();
         }
     }
 }

@@ -1,39 +1,141 @@
 ﻿using ATOH.DataBase.DbContexts;
 using ATOH.Entities;
+using ATOH.Entities.Exceptions;
 using ATOH.Interfaces;
 
 namespace ATOH.DataBase.Repositories
 {
     public class PostgresRepository(PostgresDbContext context) : IRepository<User>
     {
-        public void Add(User entity)
+        public void Create(User user) =>
+            context.Users.Add(user);
+
+        public void CreateToken(Guid id) =>
+            context.UserTokens.Add(new UserToken(id)); 
+
+        public void Delete(User user) =>
+            context.Users.Remove(user);
+
+        public void DeleteToken(Guid id)
         {
-            throw new NotImplementedException();
+            var token = 
+                context
+                .UserTokens
+                .FirstOrDefault(t => t.UserGuid == id);
+
+            if (token != null)
+            {
+                context.UserTokens.Remove(token);
+            }
         }
 
-        public void Delete(int id)
+        public User Get(string login, string password)
         {
-            throw new NotImplementedException();
+            var user = 
+                context
+                .Users
+                .FirstOrDefault(user => user.Login == login && user.Password == password);
+
+            return user ?? throw new BadRequestException("Can not find user with this login and password");
         }
 
-        public User Get(int id)
+        public User Get(Guid token)
         {
-            throw new NotImplementedException();
+            var user =
+                context
+                .Users
+                .Join(
+                    context.UserTokens,
+                    user => user.Guid,
+                    token => token.UserGuid,
+                    (u, t) => new { User = u, Token = t })
+                .FirstOrDefault(userToken => userToken.Token.Token == token);
+
+            if (user == null) 
+                throw new BadRequestException($"Can not find user with this token {token}");
+
+            return user.User;
         }
 
-        public IEnumerable<User> GetAll()
+        public User Get(string login)
         {
-            throw new NotImplementedException();
+            var user =
+                context
+                .Users
+                .FirstOrDefault(user => user.Login == login);
+
+            return user ?? throw new BadRequestException("Can not find user with this login");
         }
 
-        public void Save()
+        public IEnumerable<User> GetAllActive()
         {
-            throw new NotImplementedException();
+            var users =
+                context
+                .Users
+                .Where(user => user.RevokedBy == null);
+
+            if (!users.Any())
+                throw new BadRequestException("No active users");
+
+            return users;
         }
 
-        public void Update(User entity)
+        public IEnumerable<User> GetAllOlder(DateTime date)
         {
-            throw new NotImplementedException();
+            var users =
+                context
+                .Users
+                .Where(user => user.Birthday.HasValue && user.Birthday < date);
+
+            if (!users.Any())
+                throw new BadRequestException($"No users older then {date}");
+
+            return users;
         }
+
+        public Guid GetToken(Guid id)
+        {
+            var token = 
+                context
+                .UserTokens
+                .FirstOrDefault(token => token.UserGuid == id);
+
+            if (token == null)
+                throw new BadRequestException($"No token for user with id {id}");
+
+            return token.Token;
+        }
+
+        public bool IsAdminToken(Guid token)
+        {
+            var it = 
+                context
+                .AdminTokens
+                .FirstOrDefault(item => item.Token == token);
+
+            if (it == null)
+                return false;
+
+            return true;
+        }
+
+        public bool IsLoginUnique(string login)
+        {
+            var sameLogin = 
+                context
+                .Users
+                .FirstOrDefault (user => user.Login == login);
+
+            if (sameLogin == null)
+                return true;
+
+            return false;
+        }
+
+        public void SaveChanges() =>
+            context.SaveChanges();
+
+        public void Update(User user) =>
+            context.Update(user);
     }
 }
