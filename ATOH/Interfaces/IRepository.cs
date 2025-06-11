@@ -16,6 +16,5 @@
         IEnumerable<T> GetAllActive(); 
         IEnumerable<T> GetAllOlder(DateTime date);
         void SaveChanges();
-        void Recover(T user);
     }
 }
