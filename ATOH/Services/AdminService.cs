@@ -80,12 +80,20 @@ namespace ATOH.Services
             return repository.Get(login);
         }
 
-        public void RecoverUser(Guid token)
+        public void RecoverUser(Guid token, string login)
         {
-            if (!repository.IsAdminToken(token))
+            var admin = repository.Get(token);
+
+            if (!admin.Admin)
                 throw new UnAuthException("Only admins can recover users");
 
-            throw new NotImplementedException();
+            var user = repository.Get(login);
+
+            user.Recover(admin.Login);
+
+            repository.Update(user);
+
+            repository.SaveChanges();
         }
     }
 }

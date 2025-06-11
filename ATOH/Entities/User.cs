@@ -126,6 +126,18 @@ namespace ATOH.Entities
         {
             RevokedBy = admin;
             RevokedOn = DateTime.UtcNow;
+
+            ModifiedBy = admin;
+            ModifiedOn = DateTime.UtcNow;
+        }
+
+        public void Recover(string admin)
+        {
+            RevokedBy = null;
+            RevokedOn = null;
+
+            ModifiedBy = admin;
+            ModifiedOn = DateTime.UtcNow;
         }
 
         private bool CanUpdateField()

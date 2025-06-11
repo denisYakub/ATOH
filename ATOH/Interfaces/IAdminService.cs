@@ -6,7 +6,7 @@ namespace ATOH.Interfaces
     public interface IAdminService
     {
         void CreateUser(Guid token, CreateUserRequest request);
-        void RecoverUser(Guid token);
+        void RecoverUser(Guid token, string login);
         IEnumerable<User> GetActiveUsers(Guid token);
         User GetUser(Guid token, string login);
         IEnumerable<User> GetOlderUsers(Guid token, DateTime date);

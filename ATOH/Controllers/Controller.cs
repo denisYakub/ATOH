@@ -48,12 +48,12 @@ namespace ATOH.Controllers
             }
         }
 
-        [HttpPatch("recover/{token}")]
-        public IActionResult RecoverUser([FromRoute] Guid token)
+        [HttpPatch("recover/{token}/{login}")]
+        public IActionResult RecoverUser([FromRoute] Guid token, [FromRoute] string login)
         {
             try
             {
-                admin.RecoverUser(token);
+                admin.RecoverUser(token, login);
 
                 return new OkResult();
             }
